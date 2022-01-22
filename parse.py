@@ -2,6 +2,20 @@ import time
 import requests
 from bs4 import BeautifulSoup
 import csv
+import smtplib
+from dotenv import load_dotenv, find_dotenv
+import os
+from email.message import EmailMessage
+load_dotenv(dotenv_path=find_dotenv())
+
+
+msg = EmailMessage()
+msg['Subject'] = 'PARSER OF KOLESA'
+msg['From'] = os.getenv("EMAIL")
+msg['To'] = os.getenv("RECEIVER")
+msg.set_content('LIST OF ADDS')
+files = ['cars.csv']
+
 
 HEADERS = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36", "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"}
 HOST = "https://kolesa.kz"
@@ -95,7 +109,17 @@ def parse():
 
 parse()
 
+for file in files:
+    with open(file, 'rb') as f:
+        file_data = f.read()
+        file_name = f.name
 
+    msg.add_attachment(file_data, maintype='application', subtype='octet-stream', filename=file_name)
+
+with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+    smtp.login(os.getenv("EMAIL"), os.getenv("PASSWORD"))
+    print('Message sended')
+    smtp.send_message(msg)
 # def get_pages_count(html):
 #     soup = BeautifulSoup(html, "html.parser")
 #     pagination = soup.find_all("div", class_="pager")
