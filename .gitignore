@@ -1,3 +1,10 @@
 cars.csv
 .env
 /venv
+.~lock.kolesa.xlsx#
+chromedriver
+backend/app/kolesa.xlsx
+check.py
+__pycache__/
+parse_selenium.py
+backend/app/parse.py
