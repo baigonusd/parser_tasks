@@ -21,6 +21,10 @@ class Settings:
         {
             "name": "Sending email",
             "description": "Sending ready xlsx to email"
+        },
+        {
+            "name": "Parse kolesa.kz's adds",
+            "description": "Parsing adds and sending email"
         }
     ]
 

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}
+    <title> History </title>
+    <!-- <link rel="stylesheet" href="style.css"> -->
+{% endblock %}
+
+{% block content %}
+    <h3> History </h3>
+    <div>
+        <!-- {% for item in history_list %}
+            {% include 'card.html' %}
+        {% endfor %} -->
+        {% for item in titles %}
+            {% include 'card.html' %}
+        {% endfor %}
+        {{history_list}}
+
+    </div>
+{% endblock %}

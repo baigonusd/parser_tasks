@@ -9,6 +9,8 @@ from email.message import EmailMessage
 import xlsxwriter
 import pandas as pd
 import xlrd
+import redis
+
 load_dotenv(dotenv_path=find_dotenv())
 
 
@@ -69,35 +71,88 @@ def check_pages_number(html, number_adds):
         return "number"
 
 
+# def get_content(html, number):
+#     soup = BeautifulSoup(html, "html.parser")
+#     #INFO of all cars
+#     items = soup.find_all("div", class_="a-info-side col-right-list")
+#     r = redis.Redis(charset="utf-8", decode_responses=True)
+
+#     cars = []
+#     b = 0
+#     for item in items:
+#         # "number" is number less than 20 
+#         # which we find after operation
+#         # in func "parse"
+#         b += 1
+#         if b <= number:
+#             link = HOST + item.find("a", class_="list-link ddl_product_link").get("href")
+#             link_id = link.split("/")[-1]
+#             if link is not r.keys():
+#                 s = requests.Session()
+#                 s.get(link, headers=HEADERS)
+#                 time.sleep(1)
+#                 phones = s.get(PHONE_LINK, headers=HEADERS, params={"id": link_id},)
+#                 phone = " ".join(phones.json()['phones'])
+#                 data = {
+#                     "title" : item.find("a", class_="list-link ddl_product_link").get_text(strip=True),
+#                     "price" : " ".join(item.find("span", class_="price").get_text(strip=True).split("\xa0")),
+#                     "city" : item.find("div", class_="list-region").get_text(strip=True),
+#                     "date" : item.find("span", class_="date").get_text(strip=True),
+#                     "phones": phone,
+#                     "link" : link,
+#                 }
+#                 r.hmset(link, data)
+#             else:
+#                 link_str = str(link)
+#                 string = r.hgetall(link_str)
+#                 data = string[str(string)]
+#             cars.append(data)
+#     return cars
+
 def get_content(html, number):
     soup = BeautifulSoup(html, "html.parser")
     #INFO of all cars
     items = soup.find_all("div", class_="a-info-side col-right-list")
-
-
+    r = redis.Redis(charset="utf-8", decode_responses=True)
     cars = []
     b = 0
     for item in items:
-        # "number" is number less than 20 
-        # which we find after operation
-        # in func "parse"
+    #     "number" is number less than 20 
+    #     which we find after operation
+    #     in func "parse"
         b += 1
         if b <= number:
-            link = HOST + item.find("a", class_="list-link ddl_product_link").get("href")
+
+            link = "https://kolesa.kz" + item.find("a", class_="list-link ddl_product_link").get("href")
             link_id = link.split("/")[-1]
-            s = requests.Session()
-            s.get(link, headers=HEADERS)
-            phones = s.get(PHONE_LINK, headers=HEADERS, params={"id": link_id},)
-            phone = " ".join(phones.json()['phones'])
-            cars.append({
-                "title" : item.find("a", class_="list-link ddl_product_link").get_text(strip=True),
-                "price" : " ".join(item.find("span", class_="price").get_text(strip=True).split("\xa0")),
-                "city" : item.find("div", class_="list-region").get_text(strip=True),
-                "date" : item.find("span", class_="date").get_text(strip=True),
-                "phones": phone,
-                "link" : link,
-            })
+            # print(link)
+            if link not in r.keys():
+                
+                s = requests.Session()
+                s.get(link, headers=HEADERS)
+                time.sleep(1)
+                phones = s.get(PHONE_LINK, headers=HEADERS, params={"id": link_id},)
+                phone = " ".join(phones.json()['phones'])
+                data = {
+                    "title" : item.find("a", class_="list-link ddl_product_link").get_text(strip=True),
+                    "price" : " ".join(item.find("span", class_="price").get_text(strip=True).split("\xa0")),
+                    "city" : item.find("div", class_="list-region").get_text(strip=True),
+                    "date" : item.find("span", class_="date").get_text(strip=True),
+                    "phones": phone,
+                    "link" : link,
+                }
+                ttl = 604800
+                r.hmset(link, data)
+                r.expire(link, ttl)
+            else:
+                link_str = str(link)
+                data = r.hgetall(link_str)
+            cars.append(data)
+            # print(r.keys())
     return cars
+
+
+
 
 
 def save_file(items, path):
@@ -137,7 +192,23 @@ def save_file(items, path):
     writer.save()
 
 def parse(number_adds, city, price1, price2):
-    url = SITE + f"/{city}/?price[from]={price1}&price[to]={price2}"
+    url = SITE
+    if city is not None:
+        url = SITE + f"/{city}/"
+        if price1 is not None and price2 is not None:
+            url = SITE + f"/{city}/?price[from]={price1}&price[to]={price2}"
+        elif price1 is not None:
+            url = SITE + f"/{city}/?price[from]={price1}"
+        elif price2 is not None:
+            url = SITE + f"/{city}/?price[to]={price2}"
+    
+    elif price1 is not None and price2 is not None:
+        url = SITE + f"/?price[from]={price1}&price[to]={price2}"
+    elif price1 is not None:
+        url = SITE + f"/?price[from]={price1}"
+    elif price2 is not None:
+        url = SITE + f"/?price[to]={price2}"
+    print(url)
     html = get_html(url)
     if html.status_code == 200:
         cars = []
@@ -161,11 +232,15 @@ def parse(number_adds, city, price1, price2):
             elif page == pages:
                 cars.extend(get_content(html.text, a))
         save_file(cars, FILE)
-        return f"{len(cars)} adds were created"
+        print(f"Your parser has finished, {len(cars)} adds were created")
+        return cars
     else:
         print("Error - status_code is nor equal to 200")
         return 1
 
+
+
+# parse(12, "almaty", 1000000, 3000000)
 # if parse()==1:
 #     print("<ERROR>")
 # else:

@@ -7,20 +7,22 @@ import os
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(dotenv_path=find_dotenv())
 
-
-celery = Celery('tasks', broker = 'redis://localhost:6379/0')
+BACKEND_URL = 'redis://localhost:6379/3'
+celery = Celery('tasks', broker = 'redis://localhost:6379/1', backend = BACKEND_URL)
+default_config = 'configs.celeryconfig'
+celery.config_from_object(default_config)
 # Create logger - enable to display messages on task logger
 celery_log = get_task_logger(__name__)
 
 @celery.task
-def parsing_celery(number_adds, city, price1, price2, mail):
+def parsing_celery(mail, number_adds, city, price1, price2):
     value = parse(number_adds, city, price1, price2)
     mail1 = mail
     if value == 1:
         return "Message : <ERROR ON PARSING>"
     else:
         email.delay(mail1) 
-        celery_log.info("Hi, Your parser has finished!")
+        celery_log.info("Your parser has finished!")
         return value
 
 @celery.task
