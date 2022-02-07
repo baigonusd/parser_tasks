@@ -1,60 +1,19 @@
-import redis
-import uuid
-from celery_worker import parsing_celery, celery
+from celery_worker import celery
 
-def checking_cash(mail, number_adds, city, price1, price2):
-    r = redis.Redis(charset="utf-8", decode_responses=True)
-    r2 = redis.Redis(charset="utf-8", decode_responses=True, db=2)
-    data = {
-        "email": str(mail),
-        "number_of_adds": str(number_adds),
-        "city": str(city), 
-        "price1": str(price1),
-        "price2": str(price2)        
+
+def get_celery_worker_status():
+    i = celery.control.inspect()
+    active_tasks = i.active()
+    reserved_tasks = i.reserved()
+    result = {
+        'active_tasks': active_tasks,
+        'reserved_tasks': reserved_tasks
     }
-    ttl = 604800
-    for key in r.keys():
-        print("for")
-        if r.hgetall(key) == data:
-            print("if")
-            #Response will be finded parser
-            response = r2.hget(key ,key)
-            print(response)
-            return response
-    parse_id = str(uuid.uuid4())
+
+    # active_tasks_list = result['active_tasks']['celery@dimash-Vostro-5568'][0]['id']
+    # a = []
+    # for number in range(0, len(result['reserved_tasks']['celery@dimash-Vostro-5568'])):
+    #     reserved_tasks_list = result['reserved_tasks']['celery@dimash-Vostro-5568'][number]['id']
+    #     a.append(reserved_tasks_list)
     
-    r.hmset(parse_id, data)
-    r.expire(parse_id, ttl)
-    celery_id = parsing_celery.delay(mail, number_adds, city, price1, price2)
-    celery_id_result = celery_id.id
-    result = celery.AsyncResult(celery_id_result)
-    cars_value = result.get()
-    string = '\n'.join([str(item) for item in cars_value])
-    r2.hset(parse_id ,parse_id, string)
-    r2.expire(parse_id, ttl) 
-
-    return {"Message": "Parser started"}
-
-
-def open_history_by_id():
-    r2 = redis.Redis(charset="utf-8", decode_responses=True, db=2)
-    s = r2.keys()
-    a = []
-    for key in s:
-        a.append(r2.hgetall(key))
-    return a
-open_history_by_id()
-
-def get_titles():
-    r2 = redis.Redis(charset="utf-8", decode_responses=True, db=2)
-    s = r2.keys()
-    return s
-
-def get_information_by_titles():
-    r2 = redis.Redis(charset="utf-8", decode_responses=True, db=2)
-    s = r2.keys()
-
-def give_titles():
-    r = redis.Redis(charset="utf-8", decode_responses=True)
-    s = r.keys()
-    
+    return result

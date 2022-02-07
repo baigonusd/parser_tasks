@@ -7,12 +7,22 @@ import os
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(dotenv_path=find_dotenv())
 
+import time
+
 BACKEND_URL = 'redis://localhost:6379/3'
 celery = Celery('tasks', broker = 'redis://localhost:6379/1', backend = BACKEND_URL)
 default_config = 'configs.celeryconfig'
 celery.config_from_object(default_config)
 # Create logger - enable to display messages on task logger
 celery_log = get_task_logger(__name__)
+
+
+@celery.task
+def checking():
+    for i in range(0, 20):
+        time.sleep(1)
+        print(f"Sleep number = {i}") 
+    return "Finish sleeping"
 
 @celery.task
 def parsing_celery(mail, number_adds, city, price1, price2):

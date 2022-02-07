@@ -10,6 +10,15 @@ import xlsxwriter
 import pandas as pd
 import xlrd
 import redis
+from xlsx2html import xlsx2html
+
+
+
+def converter():
+    xlsx2html('/home/dimash/kolesa-group/backend/app/kolesa.xlsx', '/home/dimash/kolesa-group/backend/app/templates/kolesa.html')
+
+
+
 
 load_dotenv(dotenv_path=find_dotenv())
 
@@ -233,6 +242,7 @@ def parse(number_adds, city, price1, price2):
                 cars.extend(get_content(html.text, a))
         save_file(cars, FILE)
         print(f"Your parser has finished, {len(cars)} adds were created")
+        # z = converter()
         return cars
     else:
         print("Error - status_code is nor equal to 200")

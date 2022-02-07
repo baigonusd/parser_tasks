@@ -8,3 +8,7 @@ check.py
 __pycache__/
 parse_selenium.py
 backend/app/parse.py
+backend/app/check_redis
+backend/app/webapp/
+backend/app/templates/check_redis.html
+kolesa.xlsx
