@@ -25,6 +25,10 @@ class Settings:
         {
             "name": "Parse kolesa.kz's adds",
             "description": "Parsing adds and sending email"
+        },
+        {
+            "name": "Show celery work",
+            "description": "Active and reserved tasks of celery worker"
         }
     ]
 

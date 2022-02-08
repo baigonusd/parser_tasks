@@ -1,6 +1,7 @@
 from fastapi import Depends, APIRouter, HTTPException, status
 from typing import Optional
-from celery_worker import parsing_celery
+from celery_worker import parsing_celery, celery
+from celery_status_check import get_celery_worker_status
 
 router = APIRouter()
 
@@ -17,6 +18,9 @@ def celery_parse(mail, number_adds: int, city: Optional[str] = None, price1: Opt
     return {"Message": f"Hi, {mail}. Parsing started! XLSX file will send to your email after parser finish"}
 
 
+@router.get("/celery-status/", tags=["Show celery work"])
+def celery_status():
+    return get_celery_worker_status()
 
 # @app.get('/kolesa/', tags=["Adds"])
 # def parsing(number_adds: int, city: Optional[str] = None, price1: Optional[int] = None, price2: Optional[int] = None):

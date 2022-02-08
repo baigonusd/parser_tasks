@@ -12,3 +12,4 @@ backend/app/check_redis
 backend/app/webapp/
 backend/app/templates/check_redis.html
 kolesa.xlsx
+backend/app/templates/kolesa.html
